@@ -282,22 +282,19 @@ scene.add(othelloBoard.board);
  * Initialize AI
  */
 
-var computer = new ComputerPlayer(4 , othelloBoard.gridLogic)
+var computer = new ComputerPlayer(4)
 
 function turnAI(currentPlayer){
-  // canvas.removeEventListener('click', onClick)
+  canvas.removeEventListener('click', onClick)
   const aiMove = computer.getBestMove(currentPlayer, othelloBoard.gridLogic);
-  if (canMove(1) == false && canMove(2) == false){
-        
-    alert('Game Over')
-    gameoff = true;
-  }
+  console.log(aiMove)
   othelloBoard.placeDisk(aiMove.x, aiMove.y)
   let affectedDisks = getAffectedDisk(currentPlayer,aiMove.x,aiMove.y);
 
   flipDisks(affectedDisks);
-  return;
-  // canvas.addEventListener('click', onClick)
+
+  setScore(score)
+  canvas.addEventListener('click', onClick)
 }
 
 
@@ -442,7 +439,6 @@ const onSquareClick = (row,column) => {
       if (othelloBoard.currentPlayer == 2) {
         setTimeout(() => {
           turnAI(othelloBoard.currentPlayer);
-          setScore(score);
         }, 2000);
       }
     }

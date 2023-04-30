@@ -1,0 +1,405 @@
+
+
+let blackBackground = document.getElementById("blackBackground");
+let boardLayer ;
+let scoreLabel;
+let canMoveLayer;
+
+const GAP = 3;
+const CELL_WIDTH = 65;
+
+let turn = 1;
+let gameOver = false;
+
+let tokens = [
+    [0,0,0,0,0,0,0,0], //1
+    [0,0,0,0,0,0,0,0], //2
+    [0,0,0,0,0,0,0,0], //3
+    [0,0,0,2,1,0,0,0], //4
+    [0,0,0,1,2,0,0,0], //5
+    [0,0,0,0,0,0,0,0], //6
+    [0,0,0,0,0,0,0,0], //7
+    [0,0,0,0,0,0,0,0]  //8
+]
+
+
+window.onload=function()
+{   
+    canMoveLayer = document.getElementById("canMoveLayer");
+    scoreLabel = document.getElementById("score");
+    blackBackground = document.getElementById("blackBackground");
+    boardLayer = document.getElementById("boardLayer");
+    blackBackground.style.width = CELL_WIDTH * 8 + (GAP*9);
+    blackBackground.style.height = CELL_WIDTH * 8 + (GAP*9);
+    drawGreenSquares();
+    drawToken();
+    drawCanMoveLayer();
+
+}
+
+function drawGreenSquares(){
+    for (let row = 0; row < 8; row++){
+        for (let column = 0; column < 8; column++){
+
+            let greenSquare = document.createElement("div")
+            greenSquare.style.position ="absolute";
+            greenSquare.style.width = CELL_WIDTH;
+            greenSquare.style.height = CELL_WIDTH;
+            greenSquare.style.backgroundColor = "green";
+            greenSquare.style.left = (CELL_WIDTH + GAP) * column + GAP;
+            greenSquare.style.top = (CELL_WIDTH + GAP) * row + GAP;
+            greenSquare.setAttribute("onClick", "clickedSquare("+row+", "+column+")");
+
+            blackBackground.appendChild(greenSquare);
+        }
+    }
+}
+
+
+
+function drawToken() {
+    if (!boardLayer) {
+        console.error("boardLayer is null or undefined");
+        return;
+      }
+    for (let row = 0; row < 8; row++){
+        for (let column = 0; column < 8; column++){
+            let valueToken = tokens[row][column];
+            if (valueToken == 0){
+
+            }
+            else{
+                let token = document.createElement("div")
+                token.style.position ="absolute";
+                token.style.width = CELL_WIDTH-4;
+                token.style.height = CELL_WIDTH-4;
+                token.style.borderRadius = "50%";
+                token.style.left = (CELL_WIDTH + GAP) * column + GAP+2;
+                token.style.top = (CELL_WIDTH + GAP) * row + GAP+2;
+                // solid color
+                if (valueToken == 1){
+                    token.style.backgroundColor = "black";
+                }
+                if (valueToken == 2){
+                    token.style.backgroundColor = "white";
+                } 
+                boardLayer.appendChild(token);
+                
+            }
+        }
+    }
+}
+
+function drawCanMoveLayer() {
+
+    canMoveLayer.innerHTML = "";
+    for (let row = 0; row < 8; row++){
+        for (let column = 0; column < 8; column++){
+            let valueToken = tokens[row][column];
+            if (valueToken == 0 && canClickSpot(turn, row, column)){
+                let outLine = document.createElement("div")
+                outLine.style.position ="absolute";
+                outLine.style.width = CELL_WIDTH-8;
+                outLine.style.height = CELL_WIDTH-8;
+                outLine.style.borderRadius = "50%";
+                outLine.style.left = (CELL_WIDTH + GAP) * column + GAP+2;
+                outLine.style.top = (CELL_WIDTH + GAP) * row + GAP+2;
+                outLine.style.zIndex = 2;
+                outLine.setAttribute("onClick", "clickedSquare("+row+", "+column+")");
+                if (turn == 1){
+                    outLine.style.border = "2px solid black";
+                }
+                if (turn == 2){
+                    outLine.style.border = "2px solid white";
+                } 
+                canMoveLayer.appendChild(outLine);
+            }
+        }
+    }
+}
+
+
+function canMove(id){
+    for (let row = 0; row < 8; row++){
+        for (let column = 0; column < 8; column++)
+        {
+            if (canClickSpot(id, row, column)){return true;}   
+        }
+    }   
+    return false;
+}
+
+function clickedSquare(row,column) {
+
+    if (gameOver) return;
+    /* Si le joueur à le droit de cliquer, 
+        on flip tous les pions affectés 
+    else 
+        return
+    */
+
+   if ( tokens[row][column] != 0 ){
+        return;
+   }
+   
+   if (canClickSpot(turn, row,column)) {
+    let affectedTokens = getAffectedTokens(turn, row,column);
+    flipTokens(affectedTokens);
+
+    tokens[row][column] = turn;
+    if (turn == 1 && canMove(2)){turn = 2;}
+    else if (turn == 2 && canMove(1)){turn = 1;}
+    if (canMove(1) == false && canMove(2) == false){
+        alert("Game Over");
+        gameOver = true;
+    }
+    drawToken();
+    drawCanMoveLayer();
+    reDrawScore();
+   }
+}
+
+
+function reDrawScore(){
+    let ones = 0;
+    let twos = 0;
+
+    for (let row = 0; row < 8; row++){
+        for (let column = 0; column < 8; column++)
+        {
+            let valueToken = tokens[row][column];
+            if (valueToken == 1){ ones +=1;}
+            else if (valueToken==2){twos +=1;}
+        }
+    }    
+    scoreLabel.innerHTML = "Black: " + ones + "White: " + twos;
+}
+
+function  canClickSpot(id, row,column){
+    /* 
+    if the number of affected discs by clicking at this post would be 0 
+        Return FALSE 
+    otherwise 
+        Return true
+    */
+   let affectedTokens = getAffectedTokens(id, row, column);
+   if (affectedTokens.length == 0) {return false;}
+   else {return true;}
+
+}
+
+function  getAffectedTokens(id, row,column){
+    let affectedTokens = []
+    // from current spot;
+    // for all eight directions. (left right up down and 4 diagoals)
+    // move along in deriction until your reach a blank or your own color
+    // (keeping track of all the opposite color locations along the way)
+    // if the terminal tile is your own color
+    //   add those locations to the list that will be returned
+    // return the list of affected tokens
+
+    //to the right
+    let couldBeAffected = [];
+    let columnIterator = column;
+    
+
+    while (columnIterator < 7){
+        columnIterator += 1;
+        let valueAtSpot = tokens[row][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : row,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    //to the left
+    couldBeAffected = [];
+    columnIterator = column; 
+
+    while (columnIterator > 0){
+        columnIterator -= 1;
+        let valueAtSpot = tokens[row][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : row,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    //above
+    couldBeAffected = [];
+    let rowIterator = row;
+    while (rowIterator > 0){
+        rowIterator -= 1;
+        let valueAtSpot = tokens[rowIterator][column];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : column
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    //below
+    couldBeAffected = [];
+    rowIterator = row;
+    while (rowIterator < 7){
+        rowIterator += 1;
+        let valueAtSpot = tokens[rowIterator][column];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : column
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    // down right
+    couldBeAffected = [];
+    rowIterator = row;
+    columnIterator = column;
+
+    while (rowIterator < 7 && columnIterator < 7){
+        rowIterator += 1;
+        columnIterator += 1;
+        let valueAtSpot = tokens[rowIterator][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    // down left
+    couldBeAffected = [];
+    rowIterator = row;
+    columnIterator = column;
+    while (rowIterator > 0 && columnIterator > 0){
+        rowIterator -= 1;
+        columnIterator -= 1;
+        let valueAtSpot = tokens[rowIterator][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    // up to the right 
+    couldBeAffected = [];
+    rowIterator = row;
+    columnIterator = column;
+    while (rowIterator > 0 && columnIterator < 7){
+        rowIterator -= 1;
+        columnIterator += 1;
+        let valueAtSpot = tokens[rowIterator][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+    // up to the left 
+    couldBeAffected = [];
+    rowIterator = row;
+    columnIterator = column;
+    while (rowIterator < 7 && columnIterator > 0){
+        rowIterator += 1;
+        columnIterator -= 1;
+        let valueAtSpot = tokens[rowIterator][columnIterator];
+        if (valueAtSpot == 0 || valueAtSpot == id){
+            if (valueAtSpot == id){
+                affectedTokens = affectedTokens.concat(couldBeAffected);
+            }
+            break;
+        }
+        else {
+            let tokenLocation = {
+                row : rowIterator,
+                column : columnIterator
+            };
+            couldBeAffected.push(tokenLocation);
+        }
+    }
+
+
+
+
+
+    return affectedTokens;
+}
+
+function  flipTokens(affectedTokens){
+     /*
+    for all the items in the list: affectedTokens:
+        if the token at that has spot as value 
+          make it a 2
+        else 
+          make it a 1
+    */
+   for (let i = 0; i < affectedTokens.length; i++){
+    let spot = affectedTokens[i];
+    if (tokens[spot.row][spot.column] == 1){
+        tokens[spot.row][spot.column] = 2;
+    } else {
+        tokens[spot.row][spot.column] = 1;
+    }
+ }
+    
+}

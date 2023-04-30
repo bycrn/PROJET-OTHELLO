@@ -53,19 +53,19 @@ function gameOver(board) {
 
 
 class ComputerPlayer {
-    constructor(depth) {
+    constructor(depth, board) {
       this.depth = depth;
-      this.grid = JSON.parse(JSON.stringify(tokens))
+      this.grid = JSON.parse(JSON.stringify(board))
     }
 
-    updateGrid(){
-      this.grid = JSON.parse(JSON.stringify(tokens))
+    updateGrid(board){
+      this.grid = JSON.parse(JSON.stringify(board))
       console.log(this.grid)
       return this.grid
     }
   
-    getBestMove(player) {
-      var board = this.updateGrid();
+    getBestMove(player, board) {
+      var board = this.updateGrid(board);
       let bestMove = null;
       let bestScore = -Infinity;
       let alpha = -Infinity;
@@ -222,9 +222,9 @@ class ComputerPlayer {
 }
 
 // Create a new instance of the `ComputerPlayer` class with a depth of 5
-const computer = new ComputerPlayer(4);
+const computer = new ComputerPlayer(4, tokens);
 
 // Generate a move for player 1 (represented by the value 1 in the grid)
-const move = computer.getBestMove(1);
+const move = computer.getBestMove(1, tokens);
 
 console.log(`Computer's move: row ${move.x}, column ${move.y}`);

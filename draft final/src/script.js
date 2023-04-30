@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui';
 import TWEEN from '@tweenjs/tween.js'
+import { ComputerPlayer, gameOver } from './ai.js';
 
 /**
  * Variable Declaration
@@ -28,7 +29,7 @@ const sizes = {
   height: window.innerHeight
 }
 
-let gameOver = false;
+let gameoff = false;
 var mouse, raycaster;
 
 // Canvas
@@ -264,148 +265,6 @@ class Board {
 
 }
 
- 
-class ComputerPlayer {
-    constructor(depth) {
-      this.depth = depth;
-      this.grid = JSON.parse(JSON.stringify(othelloBoard.gridLogic))
-    }
-
-    updateGrid(){
-      this.grid = JSON.parse(JSON.stringify(othelloBoard.gridLogic))
-      console.log(this.grid)
-    }
-  
-    getBestMove(player) {
-      var board = this.updateGrid();
-      let bestMove = null;
-      let bestScore = -Infinity;
-      let alpha = -Infinity;
-      let beta = Infinity;
-      
-      // Generate all possible moves for the current player
-      const moves = this.generateMoves(board, player);
-      
-      // Evaluate each move using the Minimax algorithm with Alpha-Beta pruning
-      for (let i = 0; i < moves.length; i++) {
-        const move = moves[i];
-        
-        // Make a copy of the board and apply the move
-        const newBoard = this.applyMove(this.board, player, move.x, move.y);
-        
-        // Evaluate the move using the Minimax algorithm with Alpha-Beta pruning
-        const score = this.minimax(newBoard, player, this.depth - 1, alpha, beta, false);
-        
-        // Update the best move and best score
-        if (score > bestScore) {
-          bestMove = move;
-          bestScore = score;
-        }
-        
-        // Update alpha for Alpha-Beta pruning
-        alpha = Math.max(alpha, bestScore);
-        
-        // Prune the search if beta <= alpha
-        if (beta <= alpha) {
-          break;
-        }
-      }
-      
-      // Return the best move
-      return bestMove;
-    }
-    
-    generateMoves(board, player) {
-      // TODO: Implement a function to generate all possible moves for the current player
-          const moves = [];
-
-      // Loop through each position on the board
-      for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-          if (board[row][col] === 0) { // If the position is empty
-            // Check if the move is valid
-            if (isValidMove(board, player, row, col)) {
-              // Add the move to the list of available moves
-              moves.push({ row, col });
-            }
-          }
-        }
-      }
-
-      return moves;
-    }
-    
-    applyMove(board, player, x, y) {
-      // TODO: Implement a function to make a copy of the board and apply the move
-      var newBoard = JSON.parse(JSON.stringify(board))
-      newBoard[x][y] = player
-
-    }
-    
-    evaluateBoard(board, player) {
-      // TODO: Implement a function to evaluate the score of the board for the current player
-      var playerScore = 0;
-
-      for (let row = 0; row < 8; row++) {
-        for (let column = 0; column < 8; column++) {
-          const result = board[row][column]
-          if (result === player) {playerScore++}
-        }
-      }
-      return playerScore;
-    }
-
-    
-    minimax(board, player, depth, alpha, beta, isMaximizingPlayer) {
-      // TODO: Implement the Minimax algorithm with Alpha-Beta pruning
-       // Check if the game is over or if we reached the maximum depth
-      if (depth === 0 || gameOver(board)) {
-        return evaluateBoard(board, player);
-      }
-      
-      if (isMaximizingPlayer) {
-        // Maximize the score for the current player
-        let maxEval = -Infinity;
-        const availableMoves = generateMoves(board, player);
-    
-        for (let i = 0; i < availableMoves.length; i++) {
-          const [x, y] = availableMoves[i];
-          const newBoard = applyMove(board, player, x, y);
-          const evaluation = minimax(newBoard, player, depth - 1, alpha, beta, false);
-          maxEval = Math.max(maxEval, evaluation);
-          alpha = Math.max(alpha, evaluation);
-    
-          if (beta <= alpha) {
-            break; // Beta cut-off
-          }
-        }
-        return maxEval;
-      } else {
-        // Minimize the score for the opponent player
-        let minEval = Infinity;
-        const opponent = 3 - player; // Assuming the players are labeled as 1 and 2
-    
-        const availableMoves = generateMoves(board, opponent);
-        for (let i = 0; i < availableMoves.length; i++) {
-          const [x, y] = availableMoves[i];
-          const newBoard = applyMove(board, opponent, x, y);
-          const evaluation = minimax(newBoard, player, depth - 1, alpha, beta, true);
-          minEval = Math.min(minEval, evaluation);
-          beta = Math.min(beta, evaluation);
-    
-          if (beta <= alpha) {
-            break; // Alpha cut-off
-          }
-        }
-    
-        return minEval;
-      }
-    } 
-}
-
-  
-
-
 
 
 /**
@@ -414,11 +273,35 @@ class ComputerPlayer {
 
 var othelloBoard = new Board();
 scene.add(othelloBoard.board);
-var computer = new ComputerPlayer()
-console.log(computer.gridObject)
 
 // console.log('a', othelloBoard.foundSpot(0,0))
 // console.log(othelloBoard.foundChild(x,y))
+
+
+/**
+ * Initialize AI
+ */
+
+var computer = new ComputerPlayer(4 , othelloBoard.gridLogic)
+
+function turnAI(currentPlayer){
+  // canvas.removeEventListener('click', onClick)
+  const aiMove = computer.getBestMove(currentPlayer, othelloBoard.gridLogic);
+  if (canMove(1) == false && canMove(2) == false){
+        
+    alert('Game Over')
+    gameoff = true;
+  }
+  othelloBoard.placeDisk(aiMove.x, aiMove.y)
+  let affectedDisks = getAffectedDisk(currentPlayer,aiMove.x,aiMove.y);
+
+  flipDisks(affectedDisks);
+  return;
+  // canvas.addEventListener('click', onClick)
+}
+
+
+
 /**
  * Axes Creation
  */
@@ -524,7 +407,7 @@ function canMove(id){
 // tous les jetons affectés se retournent
 
 const onSquareClick = (row,column) => {
-  if (gameOver) return;
+  if (gameoff) return;
 
   /* Si le joueur à le droit de cliquer, 
         on flip tous les pions affectés 
@@ -537,6 +420,8 @@ const onSquareClick = (row,column) => {
     return;
   }
 
+  
+
   var turn = othelloBoard.currentPlayer;
   if (canClickSquare(turn, row, column)) 
     {
@@ -545,16 +430,21 @@ const onSquareClick = (row,column) => {
       flipDisks(affectedDisks);
       
       turn = othelloBoard.currentPlayer;
-      console.log(canMove(1), canMove(2))
       if (canMove(1) == false && canMove(2) == false){
         
         alert('Game Over')
-        gameOver = true;
+        gameoff = true;
       }
       othelloBoard.placeDisk(row, column);
       // drawCanMoveLayer()
       setScore(score)
-      computer.updateGrid()
+
+      if (othelloBoard.currentPlayer == 2) {
+        setTimeout(() => {
+          turnAI(othelloBoard.currentPlayer);
+          setScore(score);
+        }, 2000);
+      }
     }
   }
 

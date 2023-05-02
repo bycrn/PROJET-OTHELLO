@@ -202,7 +202,6 @@ class Board {
     } else {
       console.error('already a disk in this spot!!!')
     }
-    // console.log(this.gridLogic)
     
   }
   
@@ -285,16 +284,29 @@ scene.add(othelloBoard.board);
 var computer = new ComputerPlayer(4)
 
 function turnAI(currentPlayer){
-  canvas.removeEventListener('click', onClick)
+  // canvas.removeEventListener('click', onClick)
   const aiMove = computer.getBestMove(currentPlayer, othelloBoard.gridLogic);
   console.log(aiMove)
-  othelloBoard.placeDisk(aiMove.x, aiMove.y)
-  let affectedDisks = getAffectedDisk(currentPlayer,aiMove.x,aiMove.y);
 
+  if (aiMove == null && canMove(2)){
+    aiMove = computer.getBestMove(currentPlayer, othelloBoard.gridLogic);
+
+  } 
+  othelloBoard.placeDisk(aiMove.x, aiMove.y)
+
+  let affectedDisks = getAffectedDisk(currentPlayer,aiMove.x,aiMove.y);
   flipDisks(affectedDisks);
 
   setScore(score)
-  canvas.addEventListener('click', onClick)
+
+  if(canMove(1) == false ){
+    othelloBoard.setCurrentTurn()
+    setTimeout(() => {
+      turnAI(othelloBoard.currentPlayer);
+    }, 2000);
+  }
+  
+
 }
 
 
@@ -340,8 +352,13 @@ function addClickListenerToBoard(othelloBoard, camera, onSquareClick) {
       onSquareClick(cellPosition.x, cellPosition.z);
     }
   }
-
-  canvas.addEventListener('click', onClick);
+  
+  if (othelloBoard.currentPlayer === 2){
+    canvas.removeEventListener('click', onClick)
+  }
+  else if (othelloBoard.currentPlayer === 1){
+    canvas.addEventListener('click', onClick)
+  }
 
 }
 
@@ -399,7 +416,6 @@ function canMove(id){
   }   
   return false;
 }
-
 // Si le joueur est autorisé à cliquer, 
 // tous les jetons affectés se retournent
 
@@ -412,56 +428,62 @@ const onSquareClick = (row,column) => {
         return
     */
 
-  if (othelloBoard.gridLogic[row][column] !== 0){
+  if (othelloBoard.gridLogic[row][column] !== 0)
+  {
     console.log(`Clicked on cell (${row}, ${column})`);
     return;
   }
-
   
-
-  var turn = othelloBoard.currentPlayer;
-  if (canClickSquare(turn, row, column)) 
-    {
-      
-      let affectedDisks = getAffectedDisk(turn,row,column);
-      flipDisks(affectedDisks);
-      
-      turn = othelloBoard.currentPlayer;
-      if (canMove(1) == false && canMove(2) == false){
-        
-        alert('Game Over')
+  if (canClickSquare(othelloBoard.currentPlayer, row, column)) 
+  {
+    let affectedDisks = getAffectedDisk(othelloBoard.currentPlayer,row,column);
+    flipDisks(affectedDisks);
+    
+    if (canMove(1) == false && canMove(2) == false){
         gameoff = true;
+        gameOver(othelloBoard.gridLogic)
       }
-      othelloBoard.placeDisk(row, column);
-      // drawCanMoveLayer()
-      setScore(score)
+    
+    if(othelloBoard.currentPlayer == 1) {
+      if (canMove(1)){
+        othelloBoard.placeDisk(row, column);
+        // drawCanMoveLayer()
+        setScore(score)
 
-      if (othelloBoard.currentPlayer == 2) {
+      }
+    }
+
+    console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
+    if (othelloBoard.currentPlayer == 2) {
+      if (canMove(2)){
         setTimeout(() => {
           turnAI(othelloBoard.currentPlayer);
         }, 2000);
-      }
+      }else othelloBoard.setCurrentTurn();
+        
     }
   }
+}
 
   // const textScore = document.getElementById('score')
   
 
-  function setScore(score) {
-    score.black = 0; score.white = 0;
+function setScore(score) {
+  score.black = 0; score.white = 0;
 
-    for (let row = 0; row < 8; row++) {
-      for (let column = 0; column < 8; column++) {
-        const result = othelloBoard.getgridLogic(row, column)
+  for (let row = 0; row < 8; row++) {
+    for (let column = 0; column < 8; column++) {
+      const result = othelloBoard.getgridLogic(row, column)
   
-        if (result === 1) {
+      if (result === 1) {
           score.black++
-        } else if (result === 2) {
+      } else if (result === 2) {
           score.white++
-        }
       }
     }
-    textScore.innerHTML = 'Black :&nbsp;&nbsp;' + score.black + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;White :&nbsp;&nbsp;' + score.white
+  }
+  
+  textScore.innerHTML = 'Black :&nbsp;&nbsp;' + score.black + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;White :&nbsp;&nbsp;' + score.white
   
   }
 
@@ -738,19 +760,26 @@ function animateRotationDisk(row, col) {
 // for all the items in affected lists
 // if disk at spot as value 1 make it 2
 // else make it 1
+
+
 function flipDisks(affectedDisks){
+   /*
+    for all the items in the list: affectedTokens:
+        if the token at that has spot as value 
+          make it a 2
+        else 
+          make it a 1
+    */
+
   for (var i = 0; i < affectedDisks.length; i++){
-    var spot = affectedDisks[i]
+    let spot = affectedDisks[i]
     if(othelloBoard.gridLogic[spot.row][spot.column] === 1)
-    {
-      othelloBoard.gridLogic[spot.row][spot.column] = 2;
-    }
-    else 
-    { 
+    { othelloBoard.gridLogic[spot.row][spot.column] = 2;
+    }else { 
       othelloBoard.gridLogic[spot.row][spot.column] = 1;
     }
-    animateRotationDisk(spot.row,spot.column)
 
+    animateRotationDisk(spot.row,spot.column)
     othelloBoard.foundChild(spot.row, spot.column).position.y = -0.15
   }
     
@@ -929,6 +958,18 @@ const boxPositon = new THREE.Vector3()
  */
 
 function animate() {
+
+  // if(canMove(1) == false && canMove(2) == true){othelloBoard.setCurrentTurn()}
+  //     console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
+  if(canMove(1) == false && canMove(2) == true){othelloBoard.setCurrentTurn()
+    console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
+    if (othelloBoard.currentPlayer == 2) {
+      setTimeout(() => {
+        turnAI(othelloBoard.currentPlayer);
+      }, 2000);
+    }
+}
+  
   boxPositon.setFromMatrixPosition(othelloBoard.board.matrixWorld);
   boxPositon.project(camera);
   var rect = canvas.getBoundingClientRect()

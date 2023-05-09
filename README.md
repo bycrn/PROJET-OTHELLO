@@ -57,6 +57,3 @@ Informations complémentaires dans le rapport du projet.
 
 ## 🛠 Skills
 Javascript, Three.js, HTML, CSS...
-
-
-

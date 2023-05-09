@@ -1,5 +1,7 @@
 # PROJET-Othello
 
+![Alt text](https://github.com/bycrn/PROJET-Othello/blob/main/image/board.png)
+
 ## Intro
 
 Une implémentation du jeu de plteau (Othello) jouable contre une IA utilisant l'algorithme MinMax amélioré avec l'élagage Alpha-Bêta. 

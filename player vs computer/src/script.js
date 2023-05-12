@@ -429,13 +429,14 @@ const onSquareClick = (row,column) => {
         setScore(score)
     }
   } 
-
+  
   console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
   if (othelloBoard.currentPlayer == 2 && canMove(2)) {
     setTimeout(() => {
       turnAI(othelloBoard.currentPlayer);
       }, 1000);
   }
+
 }
 
 
@@ -478,221 +479,42 @@ function canClickSquare(id, row,column){
 
 
 
-function getAffectedDisk(id, row,column){
-  var affectedTokens = []
-    // from current spot;
-    // for all eight directions. (left right up down and 4 diagoals)
-    // move along in deriction until your reach a blank or your own color
-    // (keeping track of all the opposite color locations along the way)
-    // if the terminal tile is your own color
-    //   add those locations to the list that will be returned
-    // return the list of affected tokens
-
-    //to the right
-    let couldBeAffected = [];
-    let columnIterator = column;
-    while (columnIterator < 7){
-        columnIterator += 1;
-        var valueAtSpot  = othelloBoard.getgridLogic(row, columnIterator);
-        if (valueAtSpot == 0 || valueAtSpot == id){
-            if (valueAtSpot == id){
-                affectedTokens = affectedTokens.concat(couldBeAffected);
-            }
-            break;
-        }
-        else {
-            let tokenLocation = {
-                row : row,
-                column : columnIterator
-            };
-            couldBeAffected.push(tokenLocation);
-        }
-    }
-
-    couldBeAffected = [];
-    columnIterator = column;
-    // to the left
-    while (columnIterator > 0){
-      columnIterator -= 1;
-      var valueAtSpot = othelloBoard.getgridLogic(row, columnIterator);
-      if (valueAtSpot == 0 || valueAtSpot == id){
-          if (valueAtSpot == id){
-              affectedTokens = affectedTokens.concat(couldBeAffected);
+function getAffectedDisk(playerID, row, col) {
+      var affectedTokens = [];
+      const opponentID = playerID === 1 ? 2 : 1;
+    
+      // Check the 8 directions around the placed disk
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx === 0 && dy === 0) {
+            continue; // skip the current position
           }
-          break;
-      }
-      else {
-          let tokenLocation = {
-              row : row,
-              column : columnIterator
-          };
-          couldBeAffected.push(tokenLocation);
-      }
-  }
-
-
-    couldBeAffected = [];
-    let rowIterator = row;
     
-    // above
-    while (rowIterator > 0){
-      rowIterator -= 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, column);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
-      }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : column
-        };
-        couldBeAffected.push(tokenLocation);
-      }
-  }
-
-    couldBeAffected = [];
-    rowIterator = row;
+          let x = row + dx;
+          let y = col + dy;
+          let disksToFlip = [];
     
-    // below
-
-    while (rowIterator < 7){
-      rowIterator += 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, column);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
+          // Keep moving in the current direction until we hit a boundary or an empty space
+          while (x >= 0 && x < 8 && y >= 0 && y < 8 && othelloBoard.getgridLogic(x, y) === opponentID) {
+  
+              // If we hit a disk of the current player, add all the disks in the current direction to the affectedTokens array
+              let tokenLocation = {
+                  row : x,
+                  column : y
+              }; 
+              disksToFlip.push(tokenLocation);
+              x += dx;
+              y += dy;
+              
+              if (x >= 0 && x < 8 && y >= 0 && y < 8 && othelloBoard.getgridLogic(x, y) === playerID) {   
+                  affectedTokens = affectedTokens.concat(disksToFlip);
+                  break;
+              }   
+          } 
+        }
       }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : column
-        };
-        couldBeAffected.push(tokenLocation);
-      }
+      return affectedTokens;
   }
-
-
-    // down right
-    couldBeAffected = [];
-    rowIterator = row;
-    columnIterator = column;
-
-    while (rowIterator < 7  && columnIterator < 7){
-      rowIterator += 1;
-      columnIterator += 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, columnIterator);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
-      }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : columnIterator
-        };
-        couldBeAffected.push(tokenLocation);
-      }
-  }
-
-  // down left
-  couldBeAffected = [];
-  rowIterator = row;
-  columnIterator = column;
-
-    while (rowIterator > 0 && columnIterator > 0){
-      rowIterator -= 1;
-      columnIterator -= 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, columnIterator);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
-      }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : columnIterator
-        };
-        couldBeAffected.push(tokenLocation);
-      }
-  }
-
-  // up to the right 
-  couldBeAffected = [];
-  rowIterator = row;
-  columnIterator = column;
-
-    while (rowIterator > 0 && columnIterator < 7){
-      rowIterator -= 1;
-      columnIterator += 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, columnIterator);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
-      }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : columnIterator
-        };
-        couldBeAffected.push(tokenLocation);
-      }
-  }
-
-  // up to the left 
-  couldBeAffected = [];
-    rowIterator = row;
-    columnIterator = column;
-
-    while (rowIterator < 7 && columnIterator > 0){
-      rowIterator += 1;
-      columnIterator -= 1;
-      var valueAtSpot  = othelloBoard.getgridLogic(rowIterator, columnIterator);
-      if (valueAtSpot == 0 || valueAtSpot == id)
-      {
-        if (valueAtSpot == id)
-        {
-          affectedTokens = affectedTokens.concat(couldBeAffected);
-        }break;
-      }
-      else 
-      {
-        let tokenLocation =
-        {
-            row : rowIterator,
-              column : columnIterator
-        };
-        couldBeAffected.push(tokenLocation);
-      }
-  }
-
-  return affectedTokens;
-}
 
 
 function animateRotationDisk(row, col) {
@@ -933,6 +755,7 @@ const boxPositon = new THREE.Vector3()
  */
 
 function animate() {
+
 
   boxPositon.setFromMatrixPosition(othelloBoard.board.matrixWorld);
   boxPositon.project(camera);

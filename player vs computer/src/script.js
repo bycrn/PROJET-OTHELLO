@@ -310,7 +310,7 @@ function turnAI(currentPlayer){
     othelloBoard.setCurrentTurn()
     setTimeout(() => {
         turnAI(othelloBoard.currentPlayer);
-      }, 2000);
+      }, 1000);
   } 
 }
 
@@ -434,7 +434,7 @@ const onSquareClick = (row,column) => {
   if (othelloBoard.currentPlayer == 2 && canMove(2)) {
     setTimeout(() => {
       turnAI(othelloBoard.currentPlayer);
-      }, 2000);
+      }, 1000);
   }
 }
 

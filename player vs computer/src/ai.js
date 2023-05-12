@@ -1,5 +1,4 @@
 
-
 export function gameOver(board) {
     let blackCount = 0;
     let whiteCount = 0;
@@ -79,13 +78,6 @@ export class ComputerPlayer {
             bestScore = score;
           }
           
-          // Update alpha for Alpha-Beta pruning
-          alpha = Math.max(alpha, bestScore);
-          
-          // Prune the search if beta <= alpha
-          if (beta <= alpha) {
-            break;
-          }
         }
         
         // Return the best move

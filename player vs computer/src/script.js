@@ -30,7 +30,6 @@ const sizes = {
   height: window.innerHeight
 }
 
-let gameoff = false;
 var mouse, raycaster;
 
 // Canvas
@@ -206,7 +205,6 @@ class Board {
     
   }
   
-
   foundChild(row, column) {
     if (this.getgridLogic(row, column)!= 0)
     {
@@ -221,8 +219,7 @@ class Board {
       } 
       return childToFind;
     } else console.error('No disk placed to found')
-    
-}
+  }
 
   foundSpot(row, column){
     if (this.getgridLogic(row, column) === 0)
@@ -238,7 +235,6 @@ class Board {
       } 
       return childToFind;
     } else console.error('Spot used')
-    
   }
 
   // Changer la couleur d'une case de la plateforme de jeu
@@ -940,7 +936,9 @@ function animate() {
 
   boxPositon.setFromMatrixPosition(othelloBoard.board.matrixWorld);
   boxPositon.project(camera);
+
   var rect = canvas.getBoundingClientRect()
+
   var widthHalf = sizes.width/4, heightHalf = sizes.height/4;
   boxPositon.x = rect.left + (boxPositon.x * widthHalf) + widthHalf;
   boxPositon.y = rect.top -(boxPositon.y * heightHalf) + heightHalf;

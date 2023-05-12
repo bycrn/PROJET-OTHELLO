@@ -11,8 +11,8 @@ import TWEEN from '@tweenjs/tween.js'
  */
 
 const colors = {
-  color1 : 0x203e14,
-  color2 : 0x5db53b,
+  color1 : '#18A558',
+  color2 : '#116530',
   white :  0xede0f5,
   black :  0x292929,
   light : 'skyblue',
@@ -199,6 +199,7 @@ class Board {
       this.setgridLogic(row, column, this.currentPlayer)
       this.disks.add(disk)
       this.setCurrentTurn()
+      this.ResetBoardColor()
     } else {
       console.error('already a disk in this spot!!!')
     }
@@ -294,7 +295,8 @@ function turnAI(currentPlayer){
       aiMove = computer.getBestMove(currentPlayer, othelloBoard.gridLogic);
       if (aiMove == null) {
         console.log("AI cannot make a move");
-        othelloBoard.setCurrentTurn(); // switch to the other player
+         // switch to the other player
+         othelloBoard.ResetBoardColor()
       }
     } 
 
@@ -308,10 +310,15 @@ function turnAI(currentPlayer){
   console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
   if(canMove(1) == false && othelloBoard.currentPlayer == 1 && canMove(2) == true){
     othelloBoard.setCurrentTurn()
+
     setTimeout(() => {
         turnAI(othelloBoard.currentPlayer);
-      }, 1000);
+      }, 1500);
   } 
+
+  if (othelloBoard.currentPlayer === 1){
+    changeAllCellColors(othelloBoard.currentPlayer)
+  }
 }
 
 
@@ -341,6 +348,10 @@ function turnAI(currentPlayer){
 // othelloBoard.changeCellColor(0+3, 0+3, 0xff0000);
 
 function addClickListenerToBoard(othelloBoard, camera, onSquareClick) {
+  if (othelloBoard.currentPlayer === 1){
+    changeAllCellColors(othelloBoard.currentPlayer)
+  }
+  
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
   function onClick(event) {
@@ -362,6 +373,7 @@ function addClickListenerToBoard(othelloBoard, camera, onSquareClick) {
   }
   
   if (othelloBoard.currentPlayer === 1){
+    
     canvas.addEventListener('click', onClick)
   }
 
@@ -370,13 +382,51 @@ function addClickListenerToBoard(othelloBoard, camera, onSquareClick) {
   }
 }
 
+function drawCanMoveLayer() {
 
-
-
+  canMoveLayer.innerHTML = "";
+  for (let row = 0; row < 8; row++){
+      for (let column = 0; column < 8; column++){
+          let valueToken = tokens[row][column];
+          if (valueToken == 0 && canClickSpot(turn, row, column)){
+              let outLine = document.createElement("div")
+              outLine.style.position ="absolute";
+              outLine.style.width = CELL_WIDTH-8;
+              outLine.style.height = CELL_WIDTH-8;
+              outLine.style.borderRadius = "50%";
+              outLine.style.left = (CELL_WIDTH + GAP) * column + GAP+2;
+              outLine.style.top = (CELL_WIDTH + GAP) * row + GAP+2;
+              outLine.style.zIndex = 2;
+              outLine.setAttribute("onClick", "clickedSquare("+row+", "+column+")");
+              if (turn == 1){
+                  outLine.style.border = "2px solid black";
+              }
+              if (turn == 2){
+                  outLine.style.border = "2px solid white";
+              } 
+              canMoveLayer.appendChild(outLine);
+          }
+      }
+  }
+}
 
 /**
  * Fonctionnalité jeu
  */
+
+function canClickSquare(id, row,column){
+  /* 
+    if the number of affected discs by clicking at this post would be 0 
+        Return FALSE 
+    otherwise 
+        Return true
+    */
+
+  var affectedDisks = getAffectedDisk(id, row, column);
+  if (affectedDisks.length == 0 || affectedDisks === null) {return false;}
+  else {return true;}
+}
+
 
 
 function changeCellColor(row, column) 
@@ -384,7 +434,18 @@ function changeCellColor(row, column)
   // Calculate the index of the cell in the boardChunk group
   console.log(row, column)
   const cellMesh = othelloBoard.foundSpot(row,column);
-  cellMesh.material.color.set('yellow'); // Set the new color of the material
+  cellMesh.material.color.set('#C26DBC'); // Set the new color of the material
+}
+
+function changeAllCellColors(id){
+  for (let row = 0; row < 8; row++){
+    for (let column = 0; column < 8; column++){
+      let valueToken = othelloBoard.getgridLogic(row, column);
+      if (valueToken == 0 && canClickSquare(id, row, column)){
+        changeCellColor(row, column)}   
+    }
+  }   
+  return;
 }
 
 
@@ -392,11 +453,15 @@ function canMove(id){
   for (let row = 0; row < 8; row++){
     for (let column = 0; column < 8; column++)
     {
-      if (canClickSquare(id, row, column)){return true;}   
+      let valueToken = othelloBoard.getgridLogic(row, column);
+      if (valueToken == 0 && canClickSquare(id, row, column)){return true;}   
     }
   }   
   return false;
 }
+
+
+
 
 
 // Si le joueur est autorisé à cliquer, 
@@ -429,15 +494,16 @@ const onSquareClick = (row,column) => {
         setScore(score)
     }
   } 
-  
+
   console.log('turn', othelloBoard.currentPlayer, canMove(othelloBoard.currentPlayer))
   if (othelloBoard.currentPlayer == 2 && canMove(2)) {
     setTimeout(() => {
       turnAI(othelloBoard.currentPlayer);
-      }, 1000);
+      }, 1500);
   }
 
 }
+
 
 
   // const textScore = document.getElementById('score')
@@ -463,19 +529,6 @@ function setScore(score) {
   }
 
 
-function canClickSquare(id, row,column){
-  /* 
-    if the number of affected discs by clicking at this post would be 0 
-        Return FALSE 
-    otherwise 
-        Return true
-    */
-
-  var affectedDisks = getAffectedDisk(id, row, column);
-  console.log('affectedDisks', affectedDisks)
-  if (affectedDisks.length == 0) {return false;}
-  else {return true;}
-}
 
 
 
@@ -484,17 +537,17 @@ function getAffectedDisk(playerID, row, col) {
       const opponentID = playerID === 1 ? 2 : 1;
     
       // Check the 8 directions around the placed disk
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-          if (dx === 0 && dy === 0) {
-            continue; // skip the current position
+      for (let rowIterator = -1; rowIterator <= 1; rowIterator++) {
+        for (let columnIterator = -1; columnIterator <= 1; columnIterator++) {
+          if (rowIterator === 0 && columnIterator === 0) {
+            continue; // skip ce spot
           }
     
-          let x = row + dx;
-          let y = col + dy;
+          let x = row + rowIterator;
+          let y = col + columnIterator;
           let disksToFlip = [];
     
-          // Keep moving in the current direction until we hit a boundary or an empty space
+          // Continue à aller sans la même direction tant que (x,y) est différent de l'id du joueur
           while (x >= 0 && x < 8 && y >= 0 && y < 8 && othelloBoard.getgridLogic(x, y) === opponentID) {
   
               // If we hit a disk of the current player, add all the disks in the current direction to the affectedTokens array
@@ -503,8 +556,8 @@ function getAffectedDisk(playerID, row, col) {
                   column : y
               }; 
               disksToFlip.push(tokenLocation);
-              x += dx;
-              y += dy;
+              x += rowIterator;
+              y += columnIterator;
               
               if (x >= 0 && x < 8 && y >= 0 && y < 8 && othelloBoard.getgridLogic(x, y) === playerID) {   
                   affectedTokens = affectedTokens.concat(disksToFlip);
@@ -755,6 +808,8 @@ const boxPositon = new THREE.Vector3()
  */
 
 function animate() {
+
+
 
 
   boxPositon.setFromMatrixPosition(othelloBoard.board.matrixWorld);

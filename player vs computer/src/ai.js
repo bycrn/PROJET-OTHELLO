@@ -76,8 +76,7 @@ export class ComputerPlayer {
           if (score > bestScore) {
             bestMove = move;
             bestScore = score;
-          }
-          
+          }        
         }
         
         // Return the best move
@@ -129,7 +128,7 @@ export class ComputerPlayer {
         }
       
       applyMove(board, player, x, y) {
-        // TODO: Implement a function to make a copy of the board and apply the move
+        // Implementation a function to make a copy of the board and apply the move
         var newBoard = JSON.parse(JSON.stringify(board))
         newBoard[x][y] = player
         return newBoard
@@ -137,7 +136,7 @@ export class ComputerPlayer {
       }
     
       evaluateBoard(board, player) {
-        // TODO: Implement a function to evaluate the score of the board for the current player
+        // Implementation a function to evaluate the score of the board for the current player
         var playerScore = 0;
   
         for (let row = 0; row < 8; row++) {
@@ -151,7 +150,7 @@ export class ComputerPlayer {
   
       
       minimax(board, player, depth, alpha, beta, isMaximizingPlayer) {
-        // TODO: Implement the Minimax algorithm with Alpha-Beta pruning
+        //  Implementation the Minimax algorithm with Alpha-Beta pruning
          // Check if the game is over or if we reached the maximum depth
         if (depth === 0 || gameOver(board)) {
           return this.evaluateBoard(board, player);
